@@ -1,253 +1,185 @@
 import customtkinter as tk
-import tkinter as tko
+import tkinter
 from tkinter import ttk
-from tkinter import filedialog
-from tkinter import messagebox
-import cv2 as ocv
-import cv2 as cv2
-from matplotlib import pyplot as plt
-import numpy as np
-import PL
+import pyodbc
+import datetime
+import re
 
-windows=tk.CTk()
-windows.geometry("500x100")
-windows.title("imgprocessing")
-
-windows.resizable(0,0)
-val=tko.StringVar()
-
-photopath=""
-
-def imgpath():
-    photopat = filedialog.askopenfilename(title="Select Image",
-                                        filetypes=(("PNG files", "*.png"), ("JPEG files", "*.jpg;*.jpeg")))
-    global photopath
-    photopath = photopat
+ind=0
+hhh=datetime.date
+conn = pyodbc.connect('Driver={SQL Server};'
+                          'Server=DESKTOP-DSUUU82;'
+                          'Database=task;'
+                          'Trusted_Connection=yes;')
+cursor = conn.cursor()
+window=tk.CTk()
+window.title("dr/hossam")
+window.geometry("1000x600")
+window.resizable(0,0)
 
 
-def comm(bb):
-    ii=val.get()
-    if photopath=="":
-        messagebox.showerror("input error",message="Please choose an image from your device")
-    else:
-        img = ocv.imread(photopath, 0)
-        ocv.imshow("before", img)
-        if ii=="Normalize Image":
-            Normalize_Image()
-        if ii=="Negative Image":
-            Negative_Image()
-        if ii=="Power Law Image":
-            Power_Law_Image()
-        if ii=="Log Transformation Image":
-            Log_Transformation_Image()
-        if ii=="Max Filter":
-            Max_Filter()
-        if ii=="Min Filters":
-            Min_Filters()
-        if ii=="Single Threshold":
-            Single_Threshold()
-        if ii=="Multi Thresholding":
-            Multi_Thresholding()
-        if ii=="Contrast Stretching":
-            Contrast_Stretching()
-        if ii=="Histogram":
-            Histogram()
-        if ii=="Image Resize":
-            Image_Resize()
-        if ii=="Fourier Transformation":
-            Fourier_Transformation()
-
-
-
-def Normalize_Image():
-    img = ocv.imread(photopath, 0)
-    height, width = np.shape(img)
-    img = img / 255
-    ocv.imshow("Normalize Image", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Negative_Image():
-    img = ocv.imread(photopath, 0)
-    height, width = np.shape(img)
-    for row in range(height):
-        for col in range(width):
-            img[row][col] = 255 - img[row][col]
-    ocv.imshow("My image", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Power_Law_Image():
-    img = ocv.imread(photopath, 0) / 255
-    height, width = np.shape(img)
-    for row in range(height):
-        for col in range(width):
-            img[row][col] = (2 * (img[row][col])) ** (3)
-    ocv.imshow("Power Law", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Log_Transformation_Image():
-    img = ocv.imread(photopath, 0)
-    height, width = np.shape(img)
-    for row in range(height):
-        for col in range(width):
-            img[row][col] = 30 * (np.log2(img[row][col]))
-    ocv.imshow("Log Transformation Image", img / 255)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Max_Filter():
-    img = ocv.imread(photopath, 0) / 255
-    filter_val = [[1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9]]
-    width, height = np.shape(img)
-    img2 = np.zeros((width, height))
-    for row in range(1, width - 1):
-        for col in range(1, height - 1):
-            mat = [img[row][col], img[row][col + 1], img[row][col - 1], img[row - 1][col], img[row - 1][col + 1],
-                   img[row - 1][col - 1], img[row + 1][col], img[row + 1][col + 1], img[row + 1][col - 1]]
-            img2[row][col] = np.max(mat)
-    ocv.imshow("After", img2)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Min_Filters():
-    im = ocv.imread(photopath, 0)
-    row, col = np.shape(im)
-    new = np.zeros((row, col))
-    for r in range(2, row - 1, 1):
-        for c in range(2, col - 1, 1):
-            vect = np.array([im[r - 1][c + 1], im[r][c + 1], im[r + 1][c + 1], im[r - 1][c], im[r][c], im[r + 1][c],
-                             im[r - 1][c - 1], im[r][c - 1], im[r + 1][c - 1]])
-            new[r][c] = np.min(vect)
-    max_val = np.max(new)
-    min_val = np.min(new)
-    new=(im.astype('float')-min_val)/(max_val-min_val)
-    ocv.imshow("after", new)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Single_Threshold():
-    img = ocv.imread(photopath, 0) / 255
-    width, height = np.shape(img)
-    for row in range(width - 1):
-        for col in range(height - 1):
-            if img[row][col] < .7:
-                img[row][col] = 0
-            else:
-                img[row][col] = 1
-    ocv.imshow("After", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Multi_Thresholding():
-    img = ocv.imread(photopath, 0) / 255
-    width, height = np.shape(img)
-    for row in range(width - 1):
-        for col in range(height - 1):
-            if img[row][col] < .11:
-                img[row][col] = 0
-            elif img[row][col] > .11 and img[row][col] < .39:
-                img[row][col] = .11
-            elif img[row][col] > .39 and img[row][col] < .58:
-                img[row][col] = .39
-            else:
-                img[row][col] = 1
-    ocv.imshow("After", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Contrast_Stretching():
-    img = ocv.imread(photopath, 0) / 255
-    width, height = np.shape(img)
-    for row in range(width - 1):
-        for col in range(height - 1):
-            if (img[row][col] > .3) and (img[row][col] < .7):
-                img[row][col] = img[row][col]
-            else:
-                img[row][col] = .2
-    ocv.imshow("After", img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Histogram():
-    img_array = ocv.imread(photopath, 0)
-    histogram_array = np.bincount(img_array.flatten(), minlength=255)
-    num_pixels = np.sum(histogram_array)
-    histogram_array = histogram_array / num_pixels
-    chistogram_array = np.cumsum(histogram_array)
-    transform_map = np.floor(255 * chistogram_array).astype(np.uint8)
-    img_list = list(img_array.flatten())
-    eq_img_list = [transform_map[p] for p in img_list]
-    eq_img_array = np.reshape(np.asarray(eq_img_list), img_array.shape)
-    ocv.imshow("After", eq_img_array)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Image_Resize():
-    img = ocv.imread(photopath, 0) / 255
-    width, height = np.shape(img)
-    W = int(width / 2)
-    H = int(height / 2)
-    New_Img = []
-    for row in range(1, width, 2):
-        for col in range(1, height, 2):
-            New_Img.append(img[row][col])
-    New_Img = np.reshape(New_Img, (W, H))
-    ocv.imshow("After", New_Img)
-    ocv.waitKey()
-    ocv.destroyAllWindows()
-def Fourier_Transformation():
-    image_path = photopath
-
-    # read the input image
-    image = cv2.imread(image_path, 0)
-
-    # calculating the discrete Fourier transform
-    DFT = cv2.dft(np.float32(image), flags=cv2.DFT_COMPLEX_OUTPUT)
-
-    # reposition the zero-frequency component to the spectrum's middle
-    shift = np.fft.fftshift(DFT)
-    row, col = image.shape
-    center_row, center_col = row // 2, col // 2
-
-    # create a mask with a centered square of 1s
-    mask = np.zeros((row, col, 2), np.uint8)
-    mask[center_row - 30:center_row + 30, center_col - 30:center_col + 30] = 1
-
-    # put the mask and inverse DFT in place.
-    fft_shift = shift * mask
-    fft_ifft_shift = np.fft.ifftshift(fft_shift)
-    imageThen = cv2.idft(fft_ifft_shift)
-
-    # calculate the magnitude of the inverse DFT
-    imageThen = cv2.magnitude(imageThen[:, :, 0], imageThen[:, :, 1])
-
-    # visualize the original image and the magnitude spectrum
-    plt.figure(figsize=(5, 5))
-    plt.subplot(122), plt.imshow(imageThen, cmap='gray')
-    plt.title('Magnitude Spectrum'), plt.xticks([]), plt.yticks([])
-    plt.show()
-
-
-header=tk.CTkFrame(windows,width=500,height=35,fg_color="steelblue")
-
-title=tk.CTkFrame(windows,width=500,height=120)
-
-messag=tk.CTkLabel(header,text="Choose the process you want to apply")
-
-
-button=tk.CTkButton(windows,width=10,height=10,corner_radius=10,text="image",command=lambda :imgpath())
-
-
-
-processing=("Normalize Image","Negative Image","Power Law Image","Log Transformation Image","Max Filter","Min Filters","Single Threshold","Multi Thresholding","Contrast Stretching","Histogram","Image Resize","Fourier Transformation")
-
-
-
-optionmenu=tko.ttk.OptionMenu(header,val,processing[0],*processing,command=comm)
-optionmenu.place(x=10,y=7)
-
-
-
-messag.place(x=200,y=2)
-
-button.place(x=40,y=50)
-
+header=tk.CTkFrame(window,height=80,width=1000,fg_color="#175491",corner_radius=0)
 header.place(x=0,y=0)
 
-title.place(x=0,y=30)
+tip=tk.CTkFrame(window,height=30,width=1000,fg_color="#7395B7",corner_radius=0)
+tip.place(x=0,y=79)
+
+frameemployee=tk.CTkFrame(window,width=1000,height=500,fg_color="#E0E0E0",corner_radius=0)
+    #frameemployee
+
+tree=ttk.Treeview(frameemployee)
+tree['column']=('ssn', 'Name', 'salary','Dname','Pname','Dno')
+tree.column('#0',width=0,stretch=tkinter.NO)
+tree.column('ssn',anchor=tkinter.CENTER,width=140)
+tree.column('Name',anchor=tkinter.CENTER,width=140)
+tree.column('salary',anchor=tkinter.CENTER,width=140)
+tree.column('Dname',anchor=tkinter.CENTER,width=140)
+tree.column('Pname',anchor=tkinter.CENTER,width=140)
+tree.column('Dno',anchor=tkinter.CENTER,width=140)
+
+tree.heading('#0',text='',anchor=tkinter.CENTER)
+tree.heading('ssn',text='ssn',anchor=tkinter.CENTER)
+tree.heading('Name',text='Name',anchor=tkinter.CENTER)
+tree.heading('salary',text='salary',anchor=tkinter.CENTER)
+tree.heading('Dname',text='Dname',anchor=tkinter.CENTER)
+tree.heading('Pname',text='Pname',anchor=tkinter.CENTER)
+tree.heading('Dno',text='Dno',anchor=tkinter.CENTER)
+
+def solo():
+
+    fname,lname,ss_n,birthy,addres,salar,superss_n,Dno_=getvalue()
+    superssn__ = f"SELECT superssn FROM Employees WHERE ssn={ss_n}"
+    cursor.execute(superssn__)
+    superssn___=str(cursor.fetchall())
+    superssn___ = ''.join(char for char in superssn___ if char.isdigit())
+    print(superssn___)
+    select_query = f"SELECT fname FROM Employees WHERE ssn={ss_n}"
+    select_query1 = f"SELECT salary FROM Employees WHERE ssn ={ss_n}"
+    select_query2 = f"SELECT dname FROM Department WHERE mgrssn ={superssn___} "
+    select_query3 =f"SELECT hours FROM WORKS_ON WHERE essn={ss_n}"
+    cursor.execute(select_query)
+
+    rows=cursor.fetchall()
+    cursor.execute(select_query1)
+    sal=cursor.fetchall()
+    cursor.execute(select_query2)
+    dep=cursor.fetchall()
+    cursor.execute(select_query3)
+    ho=cursor.fetchall()
 
 
-windows.mainloop()
 
+    val=(ss_n,rows,sal,dep,ho)
+    global ind
+    tree.insert(parent='',index=ind,iid=ind,text='',values=val)
+    ind=ind+1
+
+
+
+tree.place(x=360,y=100)
+
+buttonsearch=tk.CTkButton(frameemployee,text="search",width=80,height=20,command=lambda :solo()).place(x=600,y=50)
+Fname=tk.CTkEntry(frameemployee,width=100,height=20)
+Fname.place(x=40,y=50)
+
+Lname = tk.CTkEntry(frameemployee, width=100, height=20)
+Lname.place(x=40, y=100)
+
+ssn = tk.CTkEntry(frameemployee, width=100, height=20)
+ssn.place(x=40, y=150)
+
+Bdate = tk.CTkEntry(frameemployee, width=100, height=20)
+Bdate.place(x=40, y=200)
+
+address = tk.CTkEntry(frameemployee, width=100, height=20)
+address.place(x=40, y=250)
+
+salary = tk.CTkEntry(frameemployee, width=100, height=20)
+salary.place(x=40, y=300)
+
+superssn = tk.CTkEntry(frameemployee, width=100, height=20)
+superssn.place(x=40, y=350)
+
+Dno = tk.CTkEntry(frameemployee, width=100, height=20)
+Dno.place(x=40, y=400)
+    #***************************************************************
+Fnamel = tk.CTkLabel(frameemployee,text="Fname", width=100, height=20)
+Fnamel.place(x=150, y=50)
+
+Lnamel = tk.CTkLabel(frameemployee,text="Lname", width=100, height=20)
+Lnamel.place(x=150, y=100)
+
+ssnL = tk.CTkLabel(frameemployee,text="ssn", width=100, height=20)
+ssnL.place(x=150, y=150)
+
+BdateL = tk.CTkLabel(frameemployee,text="Bdate", width=100, height=20)
+BdateL.place(x=150, y=200)
+
+addressl = tk.CTkLabel(frameemployee, width=100, height=20,text="address")
+addressl.place(x=150, y=250)
+
+salaryl = tk.CTkLabel(frameemployee, width=100, height=20,text="salary")
+salaryl.place(x=150, y=300)
+
+superssnl = tk.CTkLabel(frameemployee, width=100, height=20,text="superssn")
+superssnl.place(x=150, y=350)
+
+Dnol = tk.CTkLabel(frameemployee, width=100, height=20,text="Dno")
+Dnol.place(x=150, y=400)
+    #hhhhhh
+
+
+
+
+
+    #header element
+
+buttonemployee=tk.CTkButton(header,width=150,height=40,fg_color="#083D72",text="EMPLOYEE",text_color="white",command=lambda :buttonemp())
+buttonemployee.place(x=50,y=20)
+
+
+buttondepr=tk.CTkButton(header,width=150,height=40,fg_color="#083D72",text="DEPARTMENT",text_color="white")
+buttondepr.place(x=220,y=20)
+
+buttonproject=tk.CTkButton(header,width=150,height=40,fg_color="#083D72",text="DEPARTMENT",text_color="white")
+buttonproject.place(x=390,y=20)
+
+
+
+
+labelheader=tk.CTkLabel(window,text="Hamoksha",width=200,fg_color="#175491",bg_color="#175491",font=("Verdana",36,"bold"),text_color="white")
+labelheader.place(x=700,y=25)
+
+#end of header element
+
+#element of tip
+#tk.CTkButton(tip,width=100,height=20,fg_color="#224FA8",text="EDIT",corner_radius=5).place(x=30,y=5)
+#tk.CTkButton(tip, width=100, height=20, fg_color="#224FA8", text="ADD", corner_radius=5).place(x=150, y=5)
+#tk.CTkButton(tip, width=100, height=20, fg_color="#224FA8", text="DELET", corner_radius=5).place(x=270, y=5)
+#end of tip
+def buttonemp():
+    frameemployee.place(x=0, y=108)
+
+
+
+
+def getvalue():
+    fname=Fname.get()
+    lname=Lname.get()
+    ss_n=ssn.get()
+    birthy=Bdate.get()
+    addres=address.get()
+    salar=salary.get()
+    superss_n=superssn.get()
+    Dno_=Dno.get()
+    Fname.delete(0,tk.END)
+    Lname.delete(0, tk.END)
+    ssn.delete(0, tk.END)
+    Bdate.delete(0, tk.END)
+    address.delete(0, tk.END)
+    salary.delete(0,tk.END)
+    superssn.delete(0, tk.END)
+    Dno.delete(0,tk.END)
+    return  fname,lname,ss_n,birthy,addres,salar,superss_n,Dno_
+
+window.mainloop()
